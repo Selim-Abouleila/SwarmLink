@@ -1,6 +1,8 @@
-# Document 03 - Connect four TurtleBots to the data plane
+# Document 03 - Manual setup for four TurtleBots
 
-For guided setup, open **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)** on the laptop. [Document 07](07-new-robot-setup.md) explains its SSH and USB paths, automatic package installation, and startup services. The steps below remain the manual alternative.
+For guided setup, open **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)** on the laptop. Choose **1** for SSH over Ethernet or existing Wi-Fi, or **2** for USB. [Document 07](07-new-robot-setup.md) explains the steps and initial Ethernet IP setup. The launcher installs packages and enables the robot's startup services.
+
+Use the manual steps below when you need to change topics, ROS domains, or other settings yourself.
 
 The current lab context is TurtleBot3 / ROS 2 Jazzy, a Windows collector PC, and Selim's iPhone hotspot. Robot 01 uses ROS domain 30 and an LDS-01, verified from its serial packets and live scans. See [02-live-robot-guide.md](02-live-robot-guide.md) for the working deployment. Hotspot DHCP addresses may change; automatic discovery handles that for paired agents.
 
@@ -44,11 +46,15 @@ The robot adapter uses the Python standard library plus its existing `rclpy`, `n
 
 ## 3. Verify robot topics and start collection
 
-The robotics team should start the robot's existing sensor/odometry bringup. This collector does not do it automatically. In the robot terminal:
+For this manual path, start the robot's sensor and odometry software first. The PC collector receives data; the robot's bringup process starts its sensors. The guided installer enables `swarmlink-bringup` to do that automatically. Use one bringup process per robot.
+
+In the robot terminal:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-source ~/turtlebot3_ws/install/setup.bash
+if [ -f ~/turtlebot3_ws/install/setup.bash ]; then
+  source ~/turtlebot3_ws/install/setup.bash
+fi
 export ROS_DOMAIN_ID=30  # match this robot's running nodes; do not assume 30 everywhere
 ```
 
@@ -67,7 +73,7 @@ Run on robot 01:
 ```bash
 python3 ~/SwarmLink/data-engineering/agents/ros2_agent.py \
   --robot-id robot-01 \
-  --run-id lab-baseline-001 \
+  --run-id hotspot-live \
   --battery-scale percent \
   --hz 2 --max-rays 360
 ```

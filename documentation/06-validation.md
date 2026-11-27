@@ -23,7 +23,9 @@ The current Python suite has 94 passing cases, including authenticated UDP disco
 
 The new setup tests build actual temporary packages and verify that only the chosen robot's key is included. They cover unsafe archive paths, malformed inputs, shell characters in hotspot names/passwords, duplicate robot IDs, same-machine retries, SSH quoting with spaces in the repository path, selected LiDAR packages, Wi-Fi failure rollback, and a detached systemd installer launch. A scripted wizard test selects an unused ID without changing existing keys. Dashboard verification distinguishes fresh sensor readings from stale or missing data.
 
-The Windows `SETUP NEW ROBOT.cmd --help` entry point and Bash syntax were checked locally. The installer tests mock operating-system package, network, and service commands. **The complete installer has not been executed on a second physical robot**, so package installation, Wi-Fi switching, hardware startup, and reboot behavior still need that acceptance check. See [Document 07](07-new-robot-setup.md).
+The Windows `SETUP NEW ROBOT.cmd --help` entry point and Bash syntax were checked locally. The installer tests replace real package, network, and service commands with test versions. **The complete installer has not been run on a second physical robot.** Package installation, Wi-Fi switching, sensor startup, and reboot behavior still need a real test.
+
+For the Ethernet path, prepare both IP addresses and SSH first. Start option 1 through the cable, let the installer join the hotspot, then unplug Ethernet and check that sensor readings continue. Reboot the robot and check that it reconnects without a login. These are remaining hardware checks, not results from the automated tests. [Document 07](07-new-robot-setup.md) gives the setup steps.
 
 ## Physical robot verification, 27 November 2026
 

@@ -54,9 +54,15 @@ To disable future automatic startup as well:
 systemctl --user disable swarmlink-agent swarmlink-bringup
 ```
 
-## Enroll another robot once
+## Set up another robot once
 
-The easiest route is **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)**. Follow [Document 07](07-new-robot-setup.md) to prepare another robot with a few inputs, over SSH or using a USB package. The commands below are the manual alternative.
+Open **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)** on the laptop. Choose **1** for SSH over Ethernet or existing Wi-Fi, or **2** for a USB package. Enter the robot login, check its hardware model, and enter the target hotspot details. The script installs packages, sets the ID and key, starts the robot services, and checks for real sensor data.
+
+A direct Ethernet cable works once both devices have compatible IP addresses and the robot has SSH enabled. The launcher does not prepare those initial addresses. It also does not turn the laptop into an internet router. The robot can join the hotspot before it downloads packages. [Document 07](07-new-robot-setup.md) has the full steps and a direct-cable example.
+
+After setup, leave the laptop and robot on the same reachable network and start the dashboard. The robot's agent finds it and sends data. For a Wi-Fi setup, unplug Ethernet and check that updates continue. Test a real robot reboot too. The full installer on a second physical robot is still an open check in [Document 06](06-validation.md).
+
+The commands below are the manual alternative.
 
 After this setup, another robot on the same reachable hotspot appears automatically when its agent sends valid data. Simply joining Wi-Fi does not install or configure the agent. Use a unique robot ID and key, and the same `run_id` for robots you want to inspect together in one experiment.
 

@@ -66,7 +66,11 @@ Python/FastAPI, SQLite, and a small HTML/Canvas frontend are implementation choi
 
 ## Connect the real robots
 
-Double-click **[SETUP NEW ROBOT.cmd](SETUP%20NEW%20ROBOT.cmd)** for guided enrollment. It supports reachable robots over SSH and a USB package for robots without an initial network connection. It configures hotspot Wi-Fi, installs the required Ubuntu 24.04 / ROS 2 Jazzy packages, assigns a robot ID/key/domain, enables startup services, and checks the live dashboard. See [Document 07](../documentation/07-new-robot-setup.md) for the exact steps and current validation limits. Its host wizard uses standard Python and the system OpenSSH client.
+Double-click **[SETUP NEW ROBOT.cmd](SETUP%20NEW%20ROBOT.cmd)** to set up another robot. Choose **1** for SSH over Ethernet or existing Wi-Fi. Choose **2** to create a USB package if the robot has no network connection yet. The laptop wizard uses standard Python and OpenSSH.
+
+Enter the robot's login, hardware model, and hotspot details. The script installs Ubuntu 24.04 / ROS 2 Jazzy packages, assigns a unique robot ID and key, keeps its sensor topics in a separate ROS domain, and enables automatic startup. It then checks the dashboard for fresh sensor readings.
+
+For a direct Ethernet cable, prepare the laptop and robot IP addresses and enable SSH first. The launcher does not configure this first connection or share the laptop's internet. The robot needs internet to download packages, for example through the hotspot it joins during setup. [Document 07](../documentation/07-new-robot-setup.md) gives the exact steps and explains what still needs a physical test.
 
 Follow [the robot deployment guide](../documentation/03-robot-setup.md). Each robot needs a unique ID (`robot-01` … `robot-04`) and token, the same experiment `run_id`, and an HTTP route to the collector PC. Each agent subscribes to its local `/odom`, `/scan`, and `/battery_state`; ROS discovery does not need to cross the iPhone hotspot to the Windows PC.
 
@@ -125,7 +129,7 @@ documentation/
   04-data-contract.md        event format and validation rules
   05-operations.md           storage, recovery, and known limits
   06-validation.md           tests and physical verification
-  07-new-robot-setup.md      guided SSH/USB enrollment without an assistant
+  07-new-robot-setup.md      guided Ethernet, Wi-Fi, and USB setup
   images/                   generated mint logo and its prompt
 data-engineering/
   SETUP NEW ROBOT.cmd         guided Windows robot setup

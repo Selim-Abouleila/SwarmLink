@@ -1,130 +1,193 @@
-# Document 07 - Set up a new robot without a chat
+# Document 07 - Set up a new robot
 
-Open **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)** from the `data-engineering` folder on the laptop. It opens a guided terminal window. You can use it yourself for the next robot; you do not need to ask an assistant to run the setup.
+Double-click **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)** in the laptop's `data-engineering` folder. Answer the questions. The script installs the robot software and checks for live data on the dashboard. You can use it without starting another chat.
 
-This version supports TurtleBot3 robots on **64-bit Ubuntu 24.04 with ROS 2 Jazzy**. It can install missing ROS packages. The Ubuntu installation, Linux login account, OpenCR firmware, and physical wiring must already be working. It does not install an operating system or flash firmware.
+The script supports **TurtleBot3 with 64-bit Ubuntu 24.04 and ROS 2 Jazzy**. It can install missing ROS packages. Ubuntu, the Linux account, the OpenCR firmware, and the robot's wiring must already work.
 
-## What you need first
+## What you need
 
-- The laptop already able to run the SwarmLink dashboard, with Python installed.
-- The robot's Linux username and password. The account must be able to use `sudo` to install packages.
-- The hotspot name and password, if the robot needs a new Wi-Fi connection.
-- The robot's TurtleBot3 model and LiDAR model. Our current robot is a Burger with an LDS-01 and uses the `percent` battery setting.
-- Internet access on the robot during package installation. Later, local telemetry does not need internet.
+- A Windows laptop that can already run the SwarmLink dashboard.
+- The new robot's Linux username and password. The account needs `sudo`, which allows package installation.
+- The hotspot name and password, if the robot needs to join Wi-Fi.
+- The TurtleBot model and the LiDAR model printed on the sensor. Our current robot is a Burger with an LDS-01.
+- Internet access on the robot to download packages. Local dashboard data does not need internet after installation.
 
-Keep the robot powered throughout the installation. A first package installation may take longer than 20 minutes on a slow connection.
+Keep the robot powered during setup. Downloading packages can take more than 20 minutes on a slow connection.
 
-The laptop needs an initial way to reach the robot before it can configure Wi-Fi. Choose one of the two paths below.
+## Choose how to reach the robot
 
-## Option 1: the robot is reachable over Ethernet or Wi-Fi
+| What you have | Launcher option | What must work first |
+| --- | --- | --- |
+| Ethernet cable, directly to the laptop or through a router/switch | **1 - Set up over SSH** | The laptop can reach the robot's Ethernet IP, and SSH is enabled. |
+| Robot already on a reachable Wi-Fi network | **1 - Set up over SSH** | The laptop can reach the robot's Wi-Fi IP, and SSH is enabled. |
+| No working network connection | **2 - Prepare USB setup** | A USB drive, plus a screen and keyboard on the robot. |
+| Setup started, but you want its progress or error log | **3 - Check a setup already started** | SSH access to the robot's current IP. |
+
+SSH opens a terminal on the robot over the network. SCP copies the setup files over that same connection. Windows needs the OpenSSH Client for options 1 and 3. If it is missing, enable it in Windows Optional features or use option 2.
+
+## Before setup over Ethernet
+
+**Yes, a direct laptop-to-robot cable works.** It needs working IP addresses first. The launcher does not assign the initial Ethernet addresses or set up laptop internet sharing.
+
+With a router, DHCP can give both devices addresses automatically. A switch by itself does not provide DHCP. Check the robot's addresses on its own terminal:
+
+```bash
+ip -br addr
+```
+
+Look at the Ethernet interface, often `eth0`. If it has no IPv4 address, prepare that connection before choosing option 1. Do not use the old IP written on a box unless it is still assigned to this robot.
+
+For a direct cable with no working IPv4 setup, this is one example:
+
+| Device | Ethernet IPv4 address | Subnet mask / prefix |
+| --- | --- | --- |
+| Laptop | `192.168.50.1` | `255.255.255.0` / `24` |
+| Robot | `192.168.50.2` | `255.255.255.0` / `24` |
+
+Use this example only if `192.168.50.0/24` is not already used by your Wi-Fi, VPN, or another network. Set the laptop's **Ethernet adapter** to the address above in Windows network settings. Leave its gateway and DNS blank for this direct link. Keep the laptop's Wi-Fi connected to the target hotspot.
+
+On the robot's own terminal, replace `eth0` if its Ethernet interface has another name:
+
+```bash
+sudo ip link set eth0 up
+sudo ip addr add 192.168.50.2/24 dev eth0
+ip -br addr show eth0
+```
+
+This adds a temporary robot address. It is lost after a reboot and may be replaced by the network manager. For a permanent address, use the robot's network settings. See [Ubuntu's IP configuration guide](https://ubuntu.com/server/docs/explanation/networking/configuring-networks/).
+
+If SSH is missing, install it on the robot while it has internet access:
+
+```bash
+sudo apt update
+sudo apt install openssh-server
+sudo systemctl enable --now ssh
+```
+
+This uses Ubuntu's [OpenSSH server](https://ubuntu.com/server/docs/how-to/security/openssh-server/). You can use the USB setup path instead if you cannot prepare SSH yet.
+
+From PowerShell on the laptop, test the login. Replace the username and address with the robot's real values:
+
+```powershell
+ssh turtle@192.168.50.2
+```
+
+If the login works, type `exit` and start the launcher. A direct Ethernet cable does not give the robot internet by itself. The installer can connect the robot to your hotspot before downloading packages.
+
+## Option 1: install over Ethernet or existing Wi-Fi
 
 1. Double-click **SETUP NEW ROBOT.cmd** and choose **1**.
-2. Enter the robot's username and current IP address or hostname. SSH must already be enabled. Ethernet needs a working address; plugging in a cable alone does not guarantee that.
-3. Enter the robot login password when SSH asks. On the first connection, SSH also asks you to verify the robot's fingerprint. Password characters are hidden while typing.
-4. Accept the suggested unused robot ID, such as `robot-02`. Confirm its hardware model, LiDAR model, and battery scale. Keep `hotspot-live` as the experiment name to see it with the current robot.
-5. Enter the exact hotspot name and its password. Leave the hotspot name blank if the robot is already on the right network.
-6. Review the short setup summary and enter **yes**. The script transfers the package and starts installation. SSH/SCP may ask for the login password again, and `sudo` asks for the robot's administrator password.
-7. Leave the launcher open. It opens the dashboard and waits for the new robot's readings.
+2. Enter the robot's Linux username and current IP address. Use its Ethernet IP when setting up through the cable.
+3. Enter the robot password when SSH asks. On the first connection, check the host fingerprint before accepting it. Password characters stay hidden while you type.
+4. Accept the suggested unused robot ID, such as `robot-02`. Check the TurtleBot model, LiDAR model, and battery scale. Our current Burger uses `percent`; another publisher may use `fraction`.
+5. Keep `hotspot-live` as the experiment name to group it with the current robot.
+6. Enter the target hotspot name and password. Leave the name blank to keep the robot's current network settings.
+7. Check the setup summary and enter **yes**. Enter the login or `sudo` password again if asked.
+8. Leave the launcher open. It starts or opens the dashboard and waits for real sensor data.
 
-SSH and SCP are included as the OpenSSH Client on many Windows installations. If the launcher says they are missing, enable **OpenSSH Client** in Windows Optional features, or use the USB path.
+The installer runs in the background on the robot. It keeps running if SSH disconnects during the Wi-Fi change. Use option 3 to check progress before starting another setup attempt.
 
-The installer runs as a background job on the robot. If switching Wi-Fi disconnects SSH, the installation continues. An interrupted connection is not proof that setup failed; use **Check a setup** before starting another job.
+After setup, check that readings still update with the Ethernet cable unplugged if you plan to use Wi-Fi. Both the laptop and robot must be on a network where they can reach each other.
 
-## Option 2: the robot is not on any network yet
+## Option 2: install with a USB drive
 
 1. Double-click **SETUP NEW ROBOT.cmd** and choose **2**.
-2. Enter the robot username, choose its unused ID and hardware settings, and enter the hotspot details.
-3. The launcher creates a ZIP under `.runtime/setup/`. Copy that ZIP to a USB drive and extract it.
-4. Plug the USB drive into the robot. Using its screen and keyboard, log in and open a terminal in the extracted setup folder.
-5. Run this one command and enter the robot's `sudo` password:
+2. Enter the robot username, unused robot ID, hardware settings, and hotspot details.
+3. Copy the ZIP shown by the launcher to a USB drive. Extract it.
+4. Plug the drive into the robot. Log in using its screen and keyboard. Open a terminal in the extracted setup folder.
+5. Run this command and enter the robot's `sudo` password:
 
    ```bash
    bash SETUP-ROBOT.sh
    ```
 
-6. Return to the laptop's setup window and press Enter. It checks whether the robot reaches the dashboard.
+6. Return to the laptop's setup window and press Enter. It checks for the robot on the dashboard.
 
-The robot script saves the hotspot connection, connects to Wi-Fi, and downloads the required packages. The USB path does not require SSH for the initial installation.
+The script connects Wi-Fi first, then downloads and installs the packages. This path does not need SSH for installation. You can read setup status on the robot's own terminal.
 
-Use each USB package for its assigned physical robot only. It contains that robot's access key and the hotspot password. Keep it private and remove the USB copy after setup. Do not commit, email, or share the package with the project repository.
+Use each USB package for one assigned robot only. It contains that robot's key and the hotspot password. Keep it private and remove the USB copy after setup.
 
-## What the script handles
+## What the script sets up
 
-| Step | What happens |
+| Part | What it does |
 | --- | --- |
-| Identity | Suggests an unused provisioned robot ID and checks existing assignments. Each package receives only that robot's key. |
-| Sensor isolation | Assigns a separate ROS domain: robot-01 uses 30, robot-02 uses 31, and so on. |
-| Wi-Fi | Saves a WPA personal hotspot profile for automatic connection. Supports NetworkManager and ordinary DHCP netplan configurations. |
-| Packages | Installs ROS 2 Jazzy base/runtime packages, TurtleBot3 bringup, and the selected LDS driver through apt. Adds the official ROS apt source if needed. |
-| Agent | Installs the SwarmLink agent and its private configuration under the robot user's `~/SwarmLink/data-engineering`. |
-| Startup | Enables the sensor and agent user services and user lingering so they can start without an interactive login. |
-| Verification | Starts or reuses the laptop dashboard, then checks for newly received odometry, LiDAR, and battery data from the chosen robot. |
+| Robot ID and key | Selects an unused ID and copies only its matching access key. The collector uses the key to accept this robot's data. |
+| ROS domain | Keeps each robot's sensor topics separate: robot-01 uses 30, robot-02 uses 31, and so on. |
+| Wi-Fi | Saves the hotspot for automatic connection. Supports NetworkManager and normal DHCP setups with Netplan. |
+| Packages | Installs ROS 2 Jazzy, TurtleBot3 sensor startup packages, and the selected LiDAR driver. Uses the official ROS package source. |
+| Agent | Installs the Python program that reads the robot's sensor topics and sends data to the laptop. |
+| Startup services | Enables `swarmlink-bringup` for sensors and `swarmlink-agent` for data. Enables user lingering so they can start without a login. |
+| Data check | Looks for fresh odometry, LiDAR, and battery readings from the selected robot. |
 
-The script does not send movement commands. It uses the normal TurtleBot sensor bringup. Stop any separate, manually launched bringup before using the installer so two driver instances do not compete for the same devices.
+Stop any sensor startup process you launched manually before installation. Two copies can compete for the same USB devices. The setup script sends no movement commands.
 
-The current collector already has keys for robots 01–04. The launcher preserves existing keys. On a fresh laptop installation it creates four keys once. If all provisioned IDs are used, it asks for more collector keys rather than silently reusing another robot's ID.
+The collector has keys for robots 01-04. The launcher keeps existing keys. On a fresh laptop it creates four keys once. If all IDs are used, more collector keys must be added before another robot can be set up.
 
-The separate ROS domains keep this version's sensor readings apart. If the team's swarm software needs a shared ROS domain, use per-robot topic namespaces and configure the agents accordingly; that is a separate integration step.
+The robot finds the collector through **UDP 8766** and sends data through **TCP 8765**. SSH setup uses **TCP 22**. The laptop firewall and network must allow the required connections. A hotspot or guest network that blocks communication between devices can prevent data from arriving.
 
-## How to read the result
+After setup, the agent can find the dashboard automatically whenever both are on a reachable local network. Joining Wi-Fi alone is not enough for a robot that has never been set up. A new Wi-Fi name/password must also be saved on each robot before it can join that network.
 
-- **SUCCESS:** the dashboard received fresh odometry, LiDAR, and battery readings from the robot.
-- **CONNECTED:** its agent reached the dashboard, but the message lists sensors that still need checking.
-- **Not verified yet:** installation may still be running, or a step failed. Open the launcher again and choose **3 - Check a setup already started**.
+Separate ROS domains suit this sensor setup. If the team's swarm software needs one shared domain, give each robot separate topic names and match its agent settings. See the manual steps in [Document 03](03-robot-setup.md).
 
-The check waits up to 20 minutes. Closing the laptop window or pressing Ctrl+C stops that wait, but does not cancel an installer already running on the robot. Package installation can continue after the wait ends.
+## Read the result
 
-To check locally on the robot, run:
+- **SUCCESS:** fresh odometry, LiDAR, and battery readings reached the dashboard.
+- **CONNECTED:** the robot appeared, but the message lists missing sensor readings.
+- **Not verified yet:** the wait ended. Installation may still be running, or a step may have failed.
+
+The laptop waits for up to 20 minutes. Closing its window or pressing Ctrl+C stops that wait. It does not stop an installer already running on the robot.
+
+Choose option **3** to read progress over SSH, using the robot's current IP. Or run these commands on the robot itself:
 
 ```bash
 cat /var/lib/swarmlink-setup/status.json
 sudo journalctl -u swarmlink-setup -n 40 --no-pager
 ```
 
-The status gives the last step: `wifi`, `packages`, `services`, `complete`, or `failed`. `complete` means installation finished; the laptop's live-data check is the separate sensor verification.
+The status shows `queued`, `wifi`, `packages`, `services`, `complete`, or `failed`. **Complete** means installation finished. The dashboard check confirms whether real sensor data arrived.
 
-## If something goes wrong
+## Fix common problems
 
-| Message or symptom | What to do |
+| Problem | Next step |
 | --- | --- |
-| Cannot connect by SSH | Check the current IP, username, SSH service, and network connection. If there is no initial connection, use USB. |
-| Login or sudo fails | Use the credentials set on that robot. They are not necessarily the same as Robot 01. |
-| Wi-Fi failed | Check the exact hotspot name, password, and signal. Failed connection attempts restore the previous managed network configuration where possible. |
-| Package step failed | Check that the robot has internet access. The setup log shows the apt error. Then rerun the launcher for the same robot. |
-| Custom static Wi-Fi configuration | Connect that network locally first, then rerun with the hotspot field blank. The installer does not replace a custom static Wi-Fi setup. |
-| Robot ID already used | Choose a genuinely unused ID for a new physical robot. For a retry, explicitly confirm the same physical robot when asked. |
-| SSH connection dropped during setup | Check setup status using its new Wi-Fi IP. On its local terminal, `hostname -I` shows its addresses. |
-| Connected, sensors missing | Check OpenCR/LiDAR power and USB cables, the selected LDS model, and the sensor service log. |
-| Installer complete but no dashboard data | Keep the laptop and robot on the same reachable network. Check TCP 8765, UDP 8766, matching keys/run names, and hotspot client isolation. |
+| Ethernet cable connected, but SSH cannot reach the robot | Check both Ethernet IPv4 addresses, the subnet mask, and the SSH service. The launcher does not configure this first connection. |
+| Login or sudo fails | Use this robot's own account details. They may differ from Robot 01. |
+| Wi-Fi fails | Check the exact hotspot name, password, and signal. The installer tries to restore the old network settings after a failed connection. |
+| Package installation fails | Check internet access on the robot and read the setup log. Retry with the same robot ID. |
+| The robot uses custom static Wi-Fi settings | Connect it locally first. Leave the hotspot field blank in the launcher. |
+| Robot ID already used | Pick an unused ID for a new robot. For a retry, confirm that it is the same physical robot. |
+| SSH disconnects during setup | Find the new address with `ip -br addr` on the robot, then use option 3. The background job may still be running. |
+| Robot connected, sensors missing | Check OpenCR/LiDAR power, USB cables, the LiDAR model, and sensor logs. |
+| Installation complete, no dashboard data | Check that the dashboard is running, devices can reach each other, TCP 8765 and UDP 8766 are allowed, and the robot key/run name match. |
 
-For the sensor and agent logs on the robot:
+Read the sensor and agent logs on the robot:
 
 ```bash
 systemctl --user status swarmlink-bringup swarmlink-agent --no-pager
 journalctl --user -u swarmlink-agent -u swarmlink-bringup -n 40 --no-pager
 ```
 
-A known SSH host key mismatch stops the SSH path. Verify the physical robot before updating an old saved host entry; the launcher does not disable that check.
+If SSH reports a changed host key, verify the robot before changing the saved host entry. The launcher keeps SSH's host checks enabled.
 
-SSH retries recognise the same machine identity. An unfinished USB setup can be rebuilt with its reserved ID after you confirm it is for the same robot. Existing runtime files are backed up inside the root-owned setup job directory before replacement. Netplan changes keep original files there too.
+You can retry an SSH setup for the same robot. You can also rebuild an unfinished USB package after confirming it is for that same robot. The installer backs up existing SwarmLink files and changed Netplan files in its root-owned setup folder.
 
-## Files behind the launcher
+## Files behind the setup
 
-All implementation paths below start inside `data-engineering/`.
+These paths start inside `data-engineering/`.
 
-| File | Purpose |
+| File | Job |
 | --- | --- |
-| `SETUP NEW ROBOT.cmd` | Opens the guided setup on Windows. |
+| `SETUP NEW ROBOT.cmd` | Opens the Windows setup window. |
 | `scripts/setup-new-robot.py` | Starts the Python wizard. |
-| `swarmlink_data/provisioning.py` | Handles questions, IDs, private packages, SSH/USB transfer, and dashboard verification. |
-| `scripts/package-robot.py` | Builds the package containing only the assigned robot's key and runtime files. |
+| `swarmlink_data/provisioning.py` | Asks questions, chooses an ID, creates the package, transfers it, and checks data. |
+| `scripts/package-robot.py` | Packages the robot files and only that robot's key. |
 | `deployment/robot/SETUP-ROBOT.sh` | Starts installation on the robot with sudo. |
-| `deployment/robot/setup_robot.py` | Configures Wi-Fi, installs packages, and enables startup services. |
+| `deployment/robot/setup_robot.py` | Sets up Wi-Fi, packages, and startup services. |
 
-SSH passwords are handled directly by OpenSSH and are not saved by the wizard. Generated credentials, packages, and enrollment records stay under ignored `.runtime/` storage. The Wi-Fi password must remain in the robot's protected network profile for automatic connection.
+OpenSSH handles the login passwords; the wizard does not save them. Generated packages, keys, and setup records stay in `.runtime/`, which Git ignores. The hotspot password stays in the robot's protected network profile so it can reconnect.
 
-## What has been checked
+## What has been tested
 
-The Windows entry point, bundle contents, input handling, duplicate-ID checks, Wi-Fi rollback, background-job launch, and live-data success conditions have automated checks. The full installer has **not yet been run on a second physical robot**. Test one new robot first, then repeat for the others. A real reboot is also needed to confirm startup on each physical unit.
+Automated checks cover the launcher, package contents, input checks, duplicate IDs, Wi-Fi rollback, background startup, and live-data checks. **The full installer still needs a test on a second physical robot.** Ethernet-to-hotspot setup and a real reboot are part of that test. See [Document 06](06-validation.md).
 
-The installation choices follow the [ROS 2 Jazzy apt instructions](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html), [ROBOTIS SBC setup guide](https://docs.robotis.com/docs/systems/turtlebot3/quick_start_guide/sbc_setup/), [NetworkManager keyfile format](https://networkmanager.dev/docs/api/latest/nm-settings-keyfile.html), and [Netplan Wi-Fi examples](https://netplan.readthedocs.io/en/stable/examples/).
+Package and Wi-Fi setup follow the [ROS 2 Jazzy instructions](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html), [ROBOTIS guide](https://docs.robotis.com/docs/systems/turtlebot3/quick_start_guide/sbc_setup/), [NetworkManager keyfile format](https://networkmanager.dev/docs/api/latest/nm-settings-keyfile.html), and [Netplan examples](https://netplan.readthedocs.io/en/stable/examples/).
