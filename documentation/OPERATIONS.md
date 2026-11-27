@@ -1,5 +1,7 @@
 # Operations and reliability boundaries
 
+Run the commands in this guide from `data-engineering/`.
+
 ## Local data products
 
 `--data` selects one collector-owned directory. Defaults are `.runtime/demo` and `.runtime/live`; keep simulation and physical experiments separate.

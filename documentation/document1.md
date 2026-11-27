@@ -48,6 +48,8 @@ The **Export** button can download a run as CSV or Parquet. CSV is easy to open 
 
 ## The main files
 
+The paths below start inside the `data-engineering/` folder.
+
 | File | What it does |
 | --- | --- |
 | `agents/ros2_agent.py` | Reads the robot's sensor topics and prepares messages. |
@@ -86,4 +88,4 @@ The robot and laptop clocks also need to agree before we use timing values to ju
 
 The experiment section is ready for later work on communication and faults. Those results stay blank until the team's robot software sends the required events. Sensor readings alone cannot tell us whether the swarm algorithm is correct.
 
-This first version gives us a working way to collect, save, view, and export real robot data. The setup details are in [docs/LIVE_ROBOT.md](docs/LIVE_ROBOT.md), and the technical checks are in [docs/VALIDATION.md](docs/VALIDATION.md).
+This first version gives us a working way to collect, save, view, and export real robot data. The setup details are in [LIVE_ROBOT.md](LIVE_ROBOT.md), and the technical checks are in [VALIDATION.md](VALIDATION.md).

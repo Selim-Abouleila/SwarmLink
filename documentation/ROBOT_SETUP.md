@@ -1,6 +1,6 @@
 # Connect four TurtleBots to the data plane
 
-The current lab context is TurtleBot3 / ROS 2 Jazzy, a Windows collector PC, and Selim's iPhone hotspot. Robot 01 uses ROS domain 30 and an LDS-01, verified from its serial packets and live scans. See `LIVE_ROBOT.md` for the working deployment. Hotspot DHCP addresses may change; automatic discovery handles that for paired agents.
+The current lab context is TurtleBot3 / ROS 2 Jazzy, a Windows collector PC, and Selim's iPhone hotspot. Robot 01 uses ROS domain 30 and an LDS-01, verified from its serial packets and live scans. See [LIVE_ROBOT.md](LIVE_ROBOT.md) for the working deployment. Hotspot DHCP addresses may change; automatic discovery handles that for paired agents.
 
 ## 1. Bring the network up
 
@@ -8,7 +8,7 @@ Enable Personal Hotspot on the iPhone and connect **both the PC and all four rob
 
 On the PC, use `ipconfig` to identify the hotspot adapter's IPv4 address. The agent's `--collector` is the **PC address**, not the robot's address. Do not hard-code the earlier `172.20.10.x` addresses without checking them again.
 
-Set up the host environment from the root README. Generate four robot keys only on a fresh installation, then start live mode. On the existing PC the keys are already provisioned; use `scripts/start-live.ps1`:
+Set up the host environment using the [data engineering README](../data-engineering/README.md), and run laptop commands from `data-engineering/`. Generate four robot keys only on a fresh installation, then start live mode. On the existing PC the keys are already provisioned; use `scripts/start-live.ps1`:
 
 ```powershell
 python -m swarmlink_data keys --robots 4 --output .runtime/robot-keys.json

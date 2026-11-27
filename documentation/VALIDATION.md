@@ -13,7 +13,7 @@ Verified locally on Windows with Python 3.11.2, and with one physical TurtleBot 
 - Recipient-based delivery metrics, retransmission handling, first detection, unknown metric nulls, and recovery measured from fault end.
 - Four- and twenty-robot fixture correctness, pause/dropout behavior, Parquet scan/null/ID preservation, repeatable exports and replay deduplication.
 
-Run `python -m pytest -q` to obtain the current result. Check the dashboard syntax with `node --check swarmlink_data/static/app.mjs`. The API checks also verify the JavaScript MIME type for the dashboard module. The Rotate 180° control is checked in the live browser.
+From `data-engineering/`, run `python -m pytest -q` to obtain the current result. Check the dashboard syntax with `node --check swarmlink_data/static/app.mjs`. The API checks also verify the JavaScript MIME type for the dashboard module. The Rotate 180° control is checked in the live browser.
 
 The current Python suite has 64 passing cases, including authenticated UDP discovery, replay/address tampering rejection, hotspot subnet derivation, explicit battery scaling, clock-offset handling, shutdown notification and data preservation, local control authorization, and launcher reuse/startup errors. Two deprecation warnings originate from the installed Uvicorn/WebSockets integration.
 

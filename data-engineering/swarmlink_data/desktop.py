@@ -66,7 +66,7 @@ def launch_dashboard(root: Path, open_browser: bool = True):
             return "already_running"
         keys = runtime / "robot-keys.json"
         if not keys.is_file():
-            raise RuntimeError("Robot setup is missing: .runtime/robot-keys.json was not found. See docs/LIVE_ROBOT.md.")
+            raise RuntimeError("Robot setup is missing: .runtime/robot-keys.json was not found. See ../documentation/LIVE_ROBOT.md.")
         # Import here so an already-running dashboard can still be opened.
         try:
             import fastapi  # noqa: F401
