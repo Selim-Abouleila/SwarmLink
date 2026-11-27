@@ -1,5 +1,7 @@
 # Document 03 - Connect four TurtleBots to the data plane
 
+For guided setup, open **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)** on the laptop. [Document 07](07-new-robot-setup.md) explains its SSH and USB paths, automatic package installation, and startup services. The steps below remain the manual alternative.
+
 The current lab context is TurtleBot3 / ROS 2 Jazzy, a Windows collector PC, and Selim's iPhone hotspot. Robot 01 uses ROS domain 30 and an LDS-01, verified from its serial packets and live scans. See [02-live-robot-guide.md](02-live-robot-guide.md) for the working deployment. Hotspot DHCP addresses may change; automatic discovery handles that for paired agents.
 
 ## 1. Bring the network up

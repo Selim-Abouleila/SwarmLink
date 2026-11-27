@@ -17,7 +17,13 @@ Verified locally on Windows with Python 3.11.2, and with one physical TurtleBot 
 
 From `data-engineering/`, run `python -m pytest -q` to obtain the current result. Check the dashboard syntax with `node --check swarmlink_data/static/app.mjs`. The API checks also verify the JavaScript MIME type for the dashboard module. The Rotate 180° control is checked in the live browser.
 
-The current Python suite has 68 passing cases, including authenticated UDP discovery, replay/address tampering rejection, hotspot subnet derivation, explicit battery scaling, clock-offset handling, shutdown notification and archive preservation, fresh dashboard sessions, local control authorization, and launcher reuse/startup errors. Two deprecation warnings originate from the installed Uvicorn/WebSockets integration.
+The current Python suite has 94 passing cases, including authenticated UDP discovery, replay/address tampering rejection, hotspot subnet derivation, explicit battery scaling, clock-offset handling, shutdown notification and archive preservation, fresh dashboard sessions, local control authorization, launcher reuse/startup errors, and the guided robot installer. Two deprecation warnings originate from the installed Uvicorn/WebSockets integration.
+
+## Guided installer checks
+
+The new setup tests build actual temporary packages and verify that only the chosen robot's key is included. They cover unsafe archive paths, malformed inputs, shell characters in hotspot names/passwords, duplicate robot IDs, same-machine retries, SSH quoting with spaces in the repository path, selected LiDAR packages, Wi-Fi failure rollback, and a detached systemd installer launch. A scripted wizard test selects an unused ID without changing existing keys. Dashboard verification distinguishes fresh sensor readings from stale or missing data.
+
+The Windows `SETUP NEW ROBOT.cmd --help` entry point and Bash syntax were checked locally. The installer tests mock operating-system package, network, and service commands. **The complete installer has not been executed on a second physical robot**, so package installation, Wi-Fi switching, hardware startup, and reboot behavior still need that acceptance check. See [Document 07](07-new-robot-setup.md).
 
 ## Physical robot verification, 27 November 2026
 

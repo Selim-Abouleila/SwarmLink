@@ -18,6 +18,7 @@ def main():
     parser.add_argument("--ros-domain", type=int, default=30)
     parser.add_argument("--battery-scale", choices=("fraction", "percent"), default="fraction")
     parser.add_argument("--lidar-model", choices=("LDS-01", "LDS-02", "LDS-03"), required=True)
+    parser.add_argument("--model", choices=("burger", "waffle", "waffle_pi"), default="burger")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,47}", args.robot_id):
         parser.error("Invalid robot ID")
@@ -31,7 +32,7 @@ def main():
     configuration = {"SWARMLINK_ROBOT_TOKEN": token, "SWARMLINK_ROBOT_ID": args.robot_id,
                      "SWARMLINK_RUN_ID": args.run_id, "SWARMLINK_BATTERY_SCALE": args.battery_scale,
                      "SWARMLINK_SAMPLE_HZ": "2", "SWARMLINK_MAX_RAYS": "360", "SWARMLINK_ROS_DISTRO": "jazzy",
-                     "ROS_DOMAIN_ID": str(args.ros_domain), "TURTLEBOT3_MODEL": "burger", "LDS_MODEL": args.lidar_model}
+                     "ROS_DOMAIN_ID": str(args.ros_domain), "TURTLEBOT3_MODEL": args.model, "LDS_MODEL": args.lidar_model}
     output = ROOT / ".runtime" / f"{args.robot_id}-package.tar"
     output.parent.mkdir(exist_ok=True)
     files = ["agents/ros2_agent.py", "swarmlink_data/__init__.py", "swarmlink_data/edge.py", "swarmlink_data/discovery.py"]

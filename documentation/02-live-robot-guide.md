@@ -56,6 +56,8 @@ systemctl --user disable swarmlink-agent swarmlink-bringup
 
 ## Enroll another robot once
 
+The easiest route is **[SETUP NEW ROBOT.cmd](../data-engineering/SETUP%20NEW%20ROBOT.cmd)**. Follow [Document 07](07-new-robot-setup.md) to prepare another robot with a few inputs, over SSH or using a USB package. The commands below are the manual alternative.
+
 After this setup, another robot on the same reachable hotspot appears automatically when its agent sends valid data. Simply joining Wi-Fi does not install or configure the agent. Use a unique robot ID and key, and the same `run_id` for robots you want to inspect together in one experiment.
 
 First ensure its sensor topics are isolated from other robots by namespace or ROS domain. Match the agent's settings to its own drivers. Check its actual LiDAR model and battery encoding; do not assume they match robot-01.

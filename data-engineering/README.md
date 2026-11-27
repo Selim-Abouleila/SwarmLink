@@ -66,6 +66,8 @@ Python/FastAPI, SQLite, and a small HTML/Canvas frontend are implementation choi
 
 ## Connect the real robots
 
+Double-click **[SETUP NEW ROBOT.cmd](SETUP%20NEW%20ROBOT.cmd)** for guided enrollment. It supports reachable robots over SSH and a USB package for robots without an initial network connection. It configures hotspot Wi-Fi, installs the required Ubuntu 24.04 / ROS 2 Jazzy packages, assigns a robot ID/key/domain, enables startup services, and checks the live dashboard. See [Document 07](../documentation/07-new-robot-setup.md) for the exact steps and current validation limits. Its host wizard uses standard Python and the system OpenSSH client.
+
 Follow [the robot deployment guide](../documentation/03-robot-setup.md). Each robot needs a unique ID (`robot-01` … `robot-04`) and token, the same experiment `run_id`, and an HTTP route to the collector PC. Each agent subscribes to its local `/odom`, `/scan`, and `/battery_state`; ROS discovery does not need to cross the iPhone hotspot to the Windows PC.
 
 On this PC, use `./scripts/start-live.ps1`. For a fresh collector, generate credentials once, then start it. Skip the keys command when the file already exists:
@@ -123,8 +125,10 @@ documentation/
   04-data-contract.md        event format and validation rules
   05-operations.md           storage, recovery, and known limits
   06-validation.md           tests and physical verification
+  07-new-robot-setup.md      guided SSH/USB enrollment without an assistant
   images/                   generated mint logo and its prompt
 data-engineering/
+  SETUP NEW ROBOT.cmd         guided Windows robot setup
   agents/ros2_agent.py        ROS 2 topic adapter (standard library transport)
   swarmlink_data/
     contracts.py             versioned event validation
