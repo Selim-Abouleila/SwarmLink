@@ -35,7 +35,7 @@ def create_app(data_dir: Path | str = ".runtime/live", demo: bool = False, robot
     @asynccontextmanager
     async def lifespan(app):
         app.state.shutdown_event = asyncio.Event()
-        store = Store(data_dir, robots)
+        store = Store(data_dir, robots, fresh_view=True)
         app.state.store = store
         app.state.demo = Demo(store, robots) if demo else None
         task = asyncio.create_task(app.state.demo.run()) if demo else None

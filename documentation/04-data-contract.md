@@ -1,4 +1,4 @@
-# Event contract v1
+# Document 04 - Event contract v1
 
 The executable contract is `swarmlink_data/contracts.py`. Unknown fields are rejected. SI units are used throughout. Optional unknown measurements are `null`, never a fabricated zero. Infinities and NaNs are invalid JSON measurements; the ROS agent converts invalid LiDAR returns to `null`.
 

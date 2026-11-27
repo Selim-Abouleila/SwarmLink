@@ -27,19 +27,19 @@ def reject_constant(value):
 
 
 class Store:
-    def __init__(self, directory: Path | str, expected_robots: int = 4):
+    def __init__(self, directory: Path | str, expected_robots: int = 4, *, fresh_view: bool = False):
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self._lease = DirectoryLease(self.directory)
         try:
-            self._initialize(expected_robots)
+            self._initialize(expected_robots, fresh_view)
         except BaseException:
             if hasattr(self, "db"):
                 self.db.close()
             self._lease.close()
             raise
 
-    def _initialize(self, expected_robots):
+    def _initialize(self, expected_robots, fresh_view):
         self.raw_dir = self.directory / "bronze"
         self.raw_dir.mkdir(exist_ok=True)
         self.expected_ids = [f"robot-{n:02d}" for n in range(1, expected_robots + 1)]
@@ -74,6 +74,13 @@ class Store:
         self.recovered_receipts = 0
         self._metric_cache: dict[str, dict] = {}
         self._recover()
+        self.collection = {"id": str(uuid4()), "started_at": time.time(), "fresh_view": fresh_view}
+        # Reset the dashboard after recovery, without destroying the durable archive
+        # or its duplicate detection. Row IDs avoid depending on either clock.
+        for table in ("events", "receipts"):
+            boundary = self.db.execute(f"SELECT coalesce(max(rowid),0) FROM {table}").fetchone()[0] if fresh_view else 0
+            self.db.execute(f"CREATE TEMP VIEW current_{table} AS "
+                            f"SELECT rowid AS storage_rowid,* FROM {table} WHERE rowid>{boundary}")
 
     def _recover(self):
         # Journal fsync precedes SQLite commit. Reapply only missing receipt IDs.
@@ -167,7 +174,7 @@ class Store:
 
     def events(self, run_id: str) -> list[dict]:
         with self.lock:
-            return [self._event_row(row) for row in self.db.execute("SELECT * FROM events WHERE run_id=? ORDER BY metric_time,event_id", (run_id,))]
+            return [self._event_row(row) for row in self.db.execute("SELECT * FROM current_events WHERE run_id=? ORDER BY metric_time,event_id", (run_id,))]
 
     @staticmethod
     def _event_row(row) -> dict:
@@ -178,19 +185,21 @@ class Store:
     def metrics(self, run_id: str) -> dict:
         with self.lock:
             if run_id not in self._metric_cache:
-                rows = self.db.execute("SELECT * FROM events WHERE run_id=? AND kind!='telemetry'", (run_id,))
+                rows = self.db.execute("SELECT * FROM current_events WHERE run_id=? AND kind!='telemetry'", (run_id,))
                 self._metric_cache[run_id] = protocol_metrics([self._event_row(r) for r in rows])
             return dict(self._metric_cache[run_id])
 
     def snapshot(self, run_id: str | None = None, now: float | None = None) -> dict:
         now = time.time() if now is None else now
         with self.lock:
-            runs = [dict(r) for r in self.db.execute("SELECT * FROM runs ORDER BY created_at DESC")]
-            selected = run_id or (runs[0]["run_id"] if runs else None)
-            counts = {r["status"]: r["n"] for r in self.db.execute("SELECT status,count(*) AS n FROM receipts GROUP BY status")}
+            runs = [dict(r) for r in self.db.execute("""SELECT r.run_id,r.source_group,r.scenario,r.protocol,r.seed,
+                min(e.received_at) AS created_at FROM runs r JOIN current_events e ON r.run_id=e.run_id
+                GROUP BY r.run_id ORDER BY created_at DESC,r.run_id""")]
+            selected = run_id if any(r["run_id"] == run_id for r in runs) else (runs[0]["run_id"] if runs else None)
+            counts = {r["status"]: r["n"] for r in self.db.execute("SELECT status,count(*) AS n FROM current_receipts GROUP BY status")}
             latest = self.db.execute("""SELECT * FROM (
                 SELECT *,row_number() OVER (PARTITION BY robot_id ORDER BY observed_at DESC,received_at DESC) AS rn
-                FROM events WHERE run_id=? AND kind='telemetry') WHERE rn=1""", (selected,)).fetchall()
+                FROM current_events WHERE run_id=? AND kind='telemetry') WHERE rn=1""", (selected,)).fetchall()
             ids = list(dict.fromkeys(self.expected_ids + [r["robot_id"] for r in latest]))
             latest_by_id = {r["robot_id"]: r for r in latest}
             robots = []
@@ -204,21 +213,21 @@ class Store:
                                 observed_at=event["observed_at"], session_id=event["session_id"], sequence=event["sequence"],
                                 status="stale" if receipt_age > 6 or age > 6 else "online", clock_skew=row["received_at"] - row["observed_at"] < -.1,
                                 nearest_obstacle_m=nearest_obstacle(event["payload"]))
-                    history = self.db.execute("""SELECT observed_at,event_json FROM events WHERE run_id=? AND robot_id=? AND kind='telemetry'
+                    history = self.db.execute("""SELECT observed_at,event_json FROM current_events WHERE run_id=? AND robot_id=? AND kind='telemetry'
                         ORDER BY observed_at DESC LIMIT 120""", (selected, robot_id)).fetchall()
                     item["history"] = [{"t": h["observed_at"], "pose": (p := json.loads(h["event_json"])["payload"]).get("pose"),
                                         "battery_pct": p.get("battery_pct"), "speed": p.get("linear_m_s")} for h in reversed(history)]
                 robots.append(item)
             gaps = self.db.execute("""SELECT coalesce(sum(hi-lo+1-n),0) FROM (
-                SELECT max(sequence) hi,min(sequence) lo,count(*) n FROM events WHERE run_id=? GROUP BY robot_id,session_id)""", (selected,)).fetchone()[0]
-            recent_count = self.db.execute("SELECT count(*) FROM events WHERE received_at>?", (now - 10,)).fetchone()[0]
-            raw_ages = [r[0] * 1000 for r in self.db.execute("SELECT received_at-observed_at FROM events WHERE received_at>?", (now - 60,))]
+                SELECT max(sequence) hi,min(sequence) lo,count(*) n FROM current_events WHERE run_id=? GROUP BY robot_id,session_id)""", (selected,)).fetchone()[0]
+            recent_count = self.db.execute("SELECT count(*) FROM current_events WHERE received_at>?", (now - 10,)).fetchone()[0]
+            raw_ages = [r[0] * 1000 for r in self.db.execute("SELECT received_at-observed_at FROM current_events WHERE received_at>?", (now - 60,))]
             ages = [value for value in raw_ages if value >= 0]
             ages.sort()
-            recent = [self._event_row(r) for r in self.db.execute("SELECT * FROM events WHERE run_id=? ORDER BY received_at DESC,rowid DESC LIMIT 16", (selected,))]
-            quarantine = [dict(r) for r in self.db.execute("SELECT received_at,event_id,reason FROM receipts WHERE status='rejected' ORDER BY received_at DESC LIMIT 12")]
+            recent = [self._event_row(r) for r in self.db.execute("SELECT * FROM current_events WHERE run_id=? ORDER BY received_at DESC,storage_rowid DESC LIMIT 16", (selected,))]
+            quarantine = [dict(r) for r in self.db.execute("SELECT received_at,event_id,reason FROM current_receipts WHERE status='rejected' ORDER BY received_at DESC LIMIT 12")]
             return {
-                "server_time": now, "run_id": selected, "runs": runs, "robots": robots,
+                "server_time": now, "collection": dict(self.collection), "run_id": selected, "runs": runs, "robots": robots,
                 "pipeline": {"accepted": counts.get("accepted", 0), "duplicate": counts.get("duplicate", 0), "rejected": counts.get("rejected", 0),
                              "events_per_s": recent_count / 10, "p95_event_age_ms": ages[min(len(ages)-1, int(len(ages)*.95))] if ages else None,
                              "future_timestamps": sum(age < -100 for age in raw_ages),

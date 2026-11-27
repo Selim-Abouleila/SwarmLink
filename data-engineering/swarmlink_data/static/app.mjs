@@ -41,7 +41,7 @@ function showStopped() {
   text("stream-label", "LAST SNAPSHOT"); text("last-update", "COLLECTOR STOPPED · DISPLAYING LAST RECEIVED DATA");
   text("shutdown-button", "Dashboard stopped"); $("shutdown-button").disabled = true;
   document.querySelectorAll("main button, main select").forEach(el => { el.disabled = true; });
-  toast("Dashboard shut down. Saved data is preserved. Use Start Dashboard.exe to restart.");
+  toast("Dashboard shut down. The next start opens a fresh telemetry session. The raw archive is kept.");
 }
 function connection(connected) {
   const box = $("connection"); box.classList.toggle("waiting", !connected);
@@ -57,10 +57,19 @@ function connect() {
   socket.onopen = loadControl;
   socket.onmessage = (event) => {
     if (state.stopped) return;
-    state.snapshot = JSON.parse(event.data); state.lastMessage = Date.now(); state.retry = 1000;
+    const snapshot = JSON.parse(event.data);
+    const restarted = state.snapshot && state.snapshot.collection.id !== snapshot.collection.id;
+    const reconnectLatest = restarted && Boolean(state.run);
+    if (restarted) {
+      state.run = "";
+      $("comparison-rows").innerHTML = '<tr><td colspan="7" class="empty-cell">Waiting for this session’s experiment events</td></tr>';
+    }
+    state.snapshot = snapshot; state.lastMessage = Date.now(); state.retry = 1000;
     if (!state.snapshot.robots.some(r => r.robot_id === state.selected)) state.selected = state.snapshot.robots[0]?.robot_id;
     connection(true); render();
     if (state.snapshot.shutting_down) showStopped();
+    else if (reconnectLatest) connect();
+    if (restarted && !state.stopped) comparison();
   };
   socket.onerror = () => socket.close();
   socket.onclose = () => { if (state.stopped) return; connection(false); state.retryTimer = setTimeout(connect, state.retry); state.retry = Math.min(10000, state.retry * 2); };
@@ -71,11 +80,12 @@ function render() {
   const demo = s.mode === "demo";
   $("mode-banner").classList.toggle("live", !demo);
   text("mode-tag", demo ? "SYNTHETIC FEED" : "LIVE COLLECTOR");
-  text("mode-description", demo ? `${s.robots.length} simulated robots · demonstration data, not physical measurements` : "Robot telemetry · waiting signals remain unknown until received");
+  text("mode-description", demo ? `${s.robots.length} simulated robots · demonstration data, not physical measurements` : `Robot telemetry · session started ${clock(s.collection.started_at)}`);
   $("demo-controls").hidden = !demo;
   if (demo) { state.paused = s.demo_paused; text("pause-button", state.paused ? "Resume feed" : "Pause feed"); }
   const options = '<option value="">Latest run</option>' + s.runs.map(r => `<option value="${esc(r.run_id)}">${esc(r.run_id)}</option>`).join("");
-  if ($("run-select").innerHTML !== options) { $("run-select").innerHTML = options; $("run-select").value = state.run; }
+  if ($("run-select").innerHTML !== options) $("run-select").innerHTML = options;
+  $("run-select").value = state.run;
   $("export-toggle").disabled = !s.run_id;
   const online = s.robots.filter(r => r.status === "online").length;
   $("online-count").innerHTML = `${online}<small>/ ${s.robots.length}</small>`;
@@ -130,9 +140,11 @@ function renderQuality() {
 }
 async function comparison() {
   if (state.stopped) return;
+  const collectionId = state.snapshot?.collection.id;
   try {
-    const response = await fetch("/api/compare"); if (!response.ok || state.stopped) return;
+    const response = await fetch("/api/compare", {cache:"no-store"}); if (!response.ok || state.stopped) return;
     const runs = await response.json();
+    if (state.stopped || collectionId !== state.snapshot?.collection.id) return;
     $("comparison-rows").innerHTML = runs.length ? runs.map(r => `<tr><td><span class="run-name" title="${esc(r.run_id)}">${esc(r.run_id)}</span><span class="run-scenario">${esc(r.scenario)}${r.seed == null ? "" : ` · seed ${r.seed}`} ${r.source_group === "simulation" ? '<span class="simulation-label"> / synthetic</span>' : ""}</span></td><td>${esc(r.protocol)}</td><td>${r.expected_deliveries ? `${fmt(r.delivery_pct, 1)}% <span class="run-scenario">${r.delivered} / ${r.expected_deliveries} recipients</span>` : "—"}</td><td>${r.delivery_mean_ms == null ? "—" : `${fmt(r.delivery_mean_ms, 1)} ms`}</td><td>${r.injected_faults ? `${r.detected_faults} / ${r.injected_faults}` : "—"}</td><td>${r.detection_mean_ms == null ? "—" : `${fmt(r.detection_mean_ms, 1)} ms`}</td><td>${r.recovery_mean_ms == null ? "—" : `${fmt(r.recovery_mean_ms, 1)} ms`}</td></tr>`).join("") : '<tr><td colspan="7" class="empty-cell">Protocol metrics appear when a protocol adapter emits events.</td></tr>';
   } catch { /* The WebSocket status is the connectivity indicator. */ }
 }

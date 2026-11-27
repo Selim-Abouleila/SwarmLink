@@ -1,4 +1,4 @@
-# Validation record
+# Document 06 - Validation record
 
 Verified locally on Windows with Python 3.11.2, and with one physical TurtleBot on Ubuntu 24.04 / ROS 2 Jazzy. Four physical robots have not yet been tested together.
 
@@ -12,14 +12,18 @@ Verified locally on Windows with Python 3.11.2, and with one physical TurtleBot 
 - LiDAR angular sampling and invalid-return conversion.
 - Recipient-based delivery metrics, retransmission handling, first detection, unknown metric nulls, and recovery measured from fault end.
 - Four- and twenty-robot fixture correctness, pause/dropout behavior, Parquet scan/null/ID preservation, repeatable exports and replay deduplication.
+- Fresh collector sessions clear all dashboard read models while preserving the offline archive and duplicate detection, including journal recovery before the reset boundary.
+- Session-scoped protocol metrics, API/WebSocket state and exports, and a second paired robot appearing without a pre-created dashboard card.
 
 From `data-engineering/`, run `python -m pytest -q` to obtain the current result. Check the dashboard syntax with `node --check swarmlink_data/static/app.mjs`. The API checks also verify the JavaScript MIME type for the dashboard module. The Rotate 180° control is checked in the live browser.
 
-The current Python suite has 64 passing cases, including authenticated UDP discovery, replay/address tampering rejection, hotspot subnet derivation, explicit battery scaling, clock-offset handling, shutdown notification and data preservation, local control authorization, and launcher reuse/startup errors. Two deprecation warnings originate from the installed Uvicorn/WebSockets integration.
+The current Python suite has 68 passing cases, including authenticated UDP discovery, replay/address tampering rejection, hotspot subnet derivation, explicit battery scaling, clock-offset handling, shutdown notification and archive preservation, fresh dashboard sessions, local control authorization, and launcher reuse/startup errors. Two deprecation warnings originate from the installed Uvicorn/WebSockets integration.
 
 ## Physical robot verification, 27 November 2026
 
-The Windows dashboard lifecycle was also exercised against the real collector: the red button displayed its stopped state and closed the HTTP listener; `Start Dashboard.exe` restarted the collector and opened the default browser. A second launch reused the same listening process. Live robot ingestion resumed with preserved prior records, zero rejected events, zero sequence gaps, and an empty reported robot outbox. The running collector was left available afterward.
+The Windows dashboard lifecycle was exercised against the real collector: the red button displayed its stopped state and closed the HTTP listener; `Start Dashboard.exe` restarted the collector and opened the default browser. A second launch reused the same listening process.
+
+After the session-reset change, a graceful stop and launcher restart changed the collection ID and reset the session event count from 520 to 0, with no previous history in the first snapshot. Robot 01 reconnected automatically at about 2 events/s, with zero rejected events, zero sequence gaps, and an empty reported outbox. A CSV export contained only the new session's events; older events were still present in the archive. The running collector was left available afterward.
 
 - Matched the saved SSH host key at the robot's hotspot address, then authenticated with the owner's supplied credentials.
 - Installed the missing ROS launch and message runtime packages; verified `ros2 launch --help` and all three message imports.
@@ -43,6 +47,8 @@ Checked the running local dashboard in the Codex browser at desktop and 390px ph
 - The phone layout fits without page-wide horizontal overflow; experiment tables scroll within their panel.
 - No browser console errors or warnings appeared during these interactions.
 
+For the session and logo update, the live browser showed the mint logo in the header and navigation, a session start time, the new **Session events** card, and resumed real sensor readings. No console errors or warnings were recorded. The served PNG matched `documentation/images/swarmlink-logo.png` byte for byte. The root README and documentation links were checked against their local targets.
+
 ## Remaining physical acceptance
 
-Run the checklist in `ROBOT_SETUP.md` against all four robots. Verify their topic isolation, ROS versions/QoS, clocks, hotspot peer reachability, and the team's protocol instrumentation. A complete power-cycle test remains a team check; service enablement alone is not proof of boot behavior. Neither the fixture nor a passing API test demonstrates physical sensor accuracy, protocol correctness, or a production latency/throughput target.
+Run the checklist in [Document 03](03-robot-setup.md) against all four robots. Verify their topic isolation, ROS versions/QoS, clocks, hotspot peer reachability, and the team's protocol instrumentation. A complete power-cycle test remains a team check; service enablement alone is not proof of boot behavior. Neither the fixture nor a passing API test demonstrates physical sensor accuracy, protocol correctness, or a production latency/throughput target.

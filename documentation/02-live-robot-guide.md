@@ -1,4 +1,4 @@
-# Current live robot deployment
+# Document 02 - Current live robot deployment
 
 Robot 01 is a TurtleBot3 Burger running ROS 2 Jazzy, domain 30, with an LDS-01. It connects to Selim's iPhone hotspot. Its recorded address was `172.20.10.2` and the PC was `172.20.10.5`; automatic discovery avoids depending on those leases.
 
@@ -6,7 +6,11 @@ Robot 01 is a TurtleBot3 Burger running ROS 2 Jazzy, domain 30, with an LDS-01. 
 
 Double-click **Start Dashboard.exe** directly inside `data-engineering/`. It starts the collector in the background and opens http://127.0.0.1:8765 in the default browser. If the live collector is already running, it opens that instance instead of starting a duplicate. It uses the existing Python installation (preferring `.venv`), project dependencies, and provisioned keys; it is a launcher, not a bundled Python installer. Keep the executable in this folder.
 
-The red **Shut down dashboard** button in the page's top bar stops the PC collector cleanly and leaves a stopped message in open dashboard tabs. Saved data is retained. The robot and its sensor services keep running and buffer events until the collector is started again, subject to the configured outbox capacity. Shutdown control is available only through a localhost address on the collector PC; LAN clients can view telemetry but cannot stop the collector.
+The red **Shut down dashboard** button in the page's top bar stops the PC collector cleanly and leaves a stopped message in open dashboard tabs. The robot and its sensor services keep running and buffer events until the collector is started again, subject to the configured outbox capacity. Shutdown control is available only through a localhost address on the collector PC; LAN clients can view telemetry but cannot stop the collector.
+
+Each collector start opens a fresh dashboard session. Previous readings, trails, counts, experiment results, and the dashboard's export view are reset. Refreshing the browser or opening the launcher while the collector is running keeps the same session. The banner shows the session start time and the **Session events** card counts newly accepted events since that start.
+
+Raw records remain in the local archive for offline export. Previously unsent messages queued on the robot may arrive in the new session; old readings are marked stale. Retries of already saved events do not restore previous telemetry. See [Document 05](05-operations.md) for archive exports.
 
 Startup errors appear in a Windows message box; collector output goes to `.runtime/dashboard.log`. Rebuild the small Windows executable from its included C# source with `./scripts/build-launcher.ps1`. A console alternative, from `data-engineering/`, is:
 
@@ -51,6 +55,8 @@ systemctl --user disable swarmlink-agent swarmlink-bringup
 ```
 
 ## Enroll another robot once
+
+After this setup, another robot on the same reachable hotspot appears automatically when its agent sends valid data. Simply joining Wi-Fi does not install or configure the agent. Use a unique robot ID and key, and the same `run_id` for robots you want to inspect together in one experiment.
 
 First ensure its sensor topics are isolated from other robots by namespace or ROS domain. Match the agent's settings to its own drivers. Check its actual LiDAR model and battery encoding; do not assume they match robot-01.
 

@@ -1,4 +1,4 @@
-# Document 1 SwarmLink dashboard version 1
+# Document 01 - SwarmLink dashboard version 1
 
 ## What this version does
 
@@ -44,7 +44,7 @@ Every message has an ID. If the same message arrives twice after a retry, the co
 
 On the laptop, `swarmlink_data/store.py` keeps a raw log of received messages and stores accepted data in a SQLite database. SQLite is a database saved in a local file. It makes it easier to find recent readings and past runs. The raw log uses JSONL, which stores one record per line.
 
-The **Export** button can download a run as CSV or Parquet. CSV is easy to open in a spreadsheet. Parquet is useful for analysing larger amounts of data later.
+The **Export** button downloads the selected run's data received in the current dashboard session as CSV or Parquet. CSV is easy to open in a spreadsheet. Parquet is useful for analysing larger amounts of data later. The offline export command can still read the full saved run, including earlier sessions.
 
 ## The main files
 
@@ -70,7 +70,9 @@ The paths below start inside the `data-engineering/` folder.
 4. Open the robot card to see its readings. Additional prepared robots appear when their messages arrive.
 5. Use the red **Shut down dashboard** button to stop the laptop collector.
 
-The shutdown button keeps saved data and leaves the robot running. Starting the dashboard again lets the robot send its queued messages. Opening the launcher twice reuses the running collector.
+The shutdown button leaves the robot running. Each time the collector starts, the dashboard begins a fresh session: old readings, trails, charts, counts, and experiment results are cleared from the view. This happens at startup so it also works after a crash or a forced stop. Refreshing the browser or opening the launcher twice does not reset the running session.
+
+The raw archive is kept on disk. The robot can send messages it queued while the collector was stopped. Messages received for the first time are included in the new session; older readings are marked stale until fresh ones arrive. A retry of a message already saved before the restart does not bring old telemetry back onto the screen.
 
 ## Using another Wi-Fi network
 
@@ -80,6 +82,12 @@ The network and laptop firewall must allow the devices to talk to each other. So
 
 So far, the real connection has been tested on an iPhone hotspot. Other networks still need a practical check.
 
+## Adding another robot
+
+Connecting a second robot to the hotspot is only the network step. It also needs the sensor drivers, the collection agent, a unique ID such as `robot-02`, and its matching access key. Its sensor topics must stay separate from the first robot's topics. Use the same experiment run ID when you want their readings in the same dashboard view.
+
+Once that setup is done, the running agent finds the laptop collector and its robot card appears when valid data arrives. There is no need to add the card by hand. [Document 03](03-robot-setup.md) explains the setup.
+
 ## What still needs work
 
 The next main step is to test four real robots together. Their sensor topics need to stay separate so that one robot's readings are not mixed with another's.
@@ -88,4 +96,4 @@ The robot and laptop clocks also need to agree before we use timing values to ju
 
 The experiment section is ready for later work on communication and faults. Those results stay blank until the team's robot software sends the required events. Sensor readings alone cannot tell us whether the swarm algorithm is correct.
 
-This first version gives us a working way to collect, save, view, and export real robot data. The setup details are in [LIVE_ROBOT.md](LIVE_ROBOT.md), and the technical checks are in [VALIDATION.md](VALIDATION.md).
+The setup details are in [Document 02](02-live-robot-guide.md), and the technical checks are in [Document 06](06-validation.md).

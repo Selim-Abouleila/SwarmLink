@@ -4,9 +4,11 @@ A runnable local data plane and live dashboard for a fleet of **at least four ro
 
 The implementation and launcher live in `data-engineering/`. Project guides are in the repository's top-level [documentation folder](../documentation/README.md).
 
-For a simple explanation of the first version, read [Document 1](../documentation/document1.md).
+For a simple explanation of the first version, read [Document 01](../documentation/01-dashboard-overview.md). All numbered guides are linked in the [root README](../README.md).
 
-**Real robot setup:** `robot-01` has been connected to the live pipeline over Selim's iPhone hotspot. Double-click **[Start Dashboard.exe](Start%20Dashboard.exe)** in this folder to start the live collector and open its page. Use the red **Shut down dashboard** button in the top bar to stop it. See [LIVE_ROBOT.md](../documentation/LIVE_ROBOT.md) for details. The existing local credentials are in ignored `.runtime/robot-keys.json`. Demo and live storage remain separate.
+**Real robot setup:** `robot-01` has been connected to the live pipeline over Selim's iPhone hotspot. Double-click **[Start Dashboard.exe](Start%20Dashboard.exe)** in this folder to start the live collector and open its page. Use the red **Shut down dashboard** button in the top bar to stop it. See [Document 02 - Live robot guide](../documentation/02-live-robot-guide.md) for details. The existing local credentials are in ignored `.runtime/robot-keys.json`. Demo and live storage remain separate.
+
+Each collector start opens a fresh dashboard session. Previous readings, trails, counters, run choices, and dashboard exports are cleared from the view. Browser refreshes and repeated launcher clicks keep the current session. Raw records stay in the archive for offline export; duplicate detection still includes earlier events.
 
 ## Run the four-robot demo
 
@@ -64,7 +66,7 @@ Python/FastAPI, SQLite, and a small HTML/Canvas frontend are implementation choi
 
 ## Connect the real robots
 
-Follow [the robot deployment guide](../documentation/ROBOT_SETUP.md). Each robot needs a unique ID (`robot-01` … `robot-04`) and token, the same experiment `run_id`, and an HTTP route to the collector PC. Each agent subscribes to its local `/odom`, `/scan`, and `/battery_state`; ROS discovery does not need to cross the iPhone hotspot to the Windows PC.
+Follow [the robot deployment guide](../documentation/03-robot-setup.md). Each robot needs a unique ID (`robot-01` … `robot-04`) and token, the same experiment `run_id`, and an HTTP route to the collector PC. Each agent subscribes to its local `/odom`, `/scan`, and `/battery_state`; ROS discovery does not need to cross the iPhone hotspot to the Windows PC.
 
 On this PC, use `./scripts/start-live.ps1`. For a fresh collector, generate credentials once, then start it. Skip the keys command when the file already exists:
 
@@ -79,13 +81,13 @@ Use a trusted lab/hotspot network. This prototype's dashboard is read-only but v
 
 ## Instrument the team's protocol
 
-[CONTRACT.md](../documentation/CONTRACT.md) defines the versioned envelope, payloads, timestamp semantics, and HTTP acknowledgements. [The protocol adapter example](examples/protocol_adapter.py) shows how a protocol process can emit durable events without changing its decision logic.
+[Document 04 - Data contract](../documentation/04-data-contract.md) defines the versioned envelope, payloads, timestamp semantics, and HTTP acknowledgements. [The protocol adapter example](examples/protocol_adapter.py) shows how a protocol process can emit durable events without changing its decision logic.
 
 Telemetry cannot establish consensus correctness, delivery, or fault recovery. Protocol code must emit `message_sent`, `message_received`, and explicit fault/detection/recovery events. `decision` is retained for later consensus analysis; agreement and safety proofs are **not** computed by this prototype. The fixture's timings must not be presented as protocol benchmark results.
 
 ## Export and replay
 
-Use **Export → CSV / Parquet** for the selected run while the server is running. For an offline export, stop the collector first and use the run ID shown in the dashboard:
+Use **Export → CSV / Parquet** for the selected run's events received in the current collector session. For a full archived run across previous sessions, stop the collector first and use the offline command with its run ID:
 
 ```powershell
 python -m swarmlink_data export --data .runtime/demo --run YOUR_RUN_ID --output .runtime/exports/YOUR_RUN_ID
@@ -99,7 +101,7 @@ Replay exported JSONL or a raw receipt journal into a running collector. For a l
 python -m swarmlink_data replay .runtime/exports/YOUR_RUN_ID/events.jsonl --robot-id robot-01
 ```
 
-Use a separate **demo** collector for simulation replays; live mode rejects simulation-source events. Replaying into the original data directory returns duplicates, preserving analytical counts. Replay does not regenerate sensor readings or play back at the original speed.
+Use a separate **demo** collector for simulation replays; live mode rejects simulation-source events. Replaying into the original data directory returns duplicates, preserving analytical counts. Previously accepted events do not reappear in a fresh dashboard session. Replay does not regenerate sensor readings or play back at the original speed.
 
 ## Validate
 
@@ -108,18 +110,20 @@ python -m pytest -q
 node --check swarmlink_data/static/app.mjs
 ```
 
-Node is optional and used for the dashboard syntax check; there is no frontend build step. Tests cover the event contract, four-robot authenticated ingestion, WebSocket delivery, retries, ID/sequence collisions, late arrivals, crash recovery, writer exclusion, fault metrics, queue persistence, LiDAR conversion, and export round trips. A 20-robot fixture is a correctness smoke check, not a throughput certification. See [VALIDATION.md](../documentation/VALIDATION.md) for the recorded verification and physical acceptance checklist.
+Node is optional and used for the dashboard syntax check; there is no frontend build step. Tests cover the event contract, four-robot authenticated ingestion, WebSocket delivery, retries, ID/sequence collisions, late arrivals, crash recovery, writer exclusion, fault metrics, queue persistence, LiDAR conversion, and export round trips. A 20-robot fixture is a correctness smoke check, not a throughput certification. See [Document 06 - Validation](../documentation/06-validation.md) for the recorded verification and physical acceptance checklist.
 
 ## Repository layout
 
 ```text
+README.md                    project overview and numbered documentation links
 documentation/
-  document1.md               simple explanation of the first dashboard version
-  LIVE_ROBOT.md              current deployment and everyday use
-  ROBOT_SETUP.md             setup for additional robots
-  CONTRACT.md                event format and validation rules
-  OPERATIONS.md              storage, recovery, and known limits
-  VALIDATION.md              tests and physical verification
+  01-dashboard-overview.md   simple explanation of the first dashboard version
+  02-live-robot-guide.md     current deployment and everyday use
+  03-robot-setup.md          setup for additional robots
+  04-data-contract.md        event format and validation rules
+  05-operations.md           storage, recovery, and known limits
+  06-validation.md           tests and physical verification
+  images/                   generated mint logo and its prompt
 data-engineering/
   agents/ros2_agent.py        ROS 2 topic adapter (standard library transport)
   swarmlink_data/
@@ -136,4 +140,4 @@ data-engineering/
   .runtime/                  generated local data (ignored)
 ```
 
-The collector is a single-process local prototype: no automatic retention, high availability, TLS termination, or fleet management. [OPERATIONS.md](../documentation/OPERATIONS.md) documents storage ownership, recovery, scale limits, and how to diagnose missing data.
+The collector is a single-process local prototype: no automatic retention, high availability, TLS termination, or fleet management. [Document 05 - Operations](../documentation/05-operations.md) documents storage ownership, recovery, scale limits, and how to diagnose missing data.

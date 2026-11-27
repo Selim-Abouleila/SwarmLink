@@ -1,6 +1,6 @@
-# Connect four TurtleBots to the data plane
+# Document 03 - Connect four TurtleBots to the data plane
 
-The current lab context is TurtleBot3 / ROS 2 Jazzy, a Windows collector PC, and Selim's iPhone hotspot. Robot 01 uses ROS domain 30 and an LDS-01, verified from its serial packets and live scans. See [LIVE_ROBOT.md](LIVE_ROBOT.md) for the working deployment. Hotspot DHCP addresses may change; automatic discovery handles that for paired agents.
+The current lab context is TurtleBot3 / ROS 2 Jazzy, a Windows collector PC, and Selim's iPhone hotspot. Robot 01 uses ROS domain 30 and an LDS-01, verified from its serial packets and live scans. See [02-live-robot-guide.md](02-live-robot-guide.md) for the working deployment. Hotspot DHCP addresses may change; automatic discovery handles that for paired agents.
 
 ## 1. Bring the network up
 
@@ -86,7 +86,7 @@ The agent emits up to 2 samples/s by default, not every original ROS message. It
 
 The default outbox is `~/.local/state/swarmlink/outbox.sqlite`. Pending events survive an agent restart. HTTP retries retain event IDs; the collector suppresses duplicates. The 50,000-event capacity is about 6.9 hours at 2 Hz, before protocol events, and depends on disk availability. At capacity new samples are refused with an error rather than overwriting pending history. Monitor storage and restore connectivity.
 
-The optional services under `deployment/robot/` start bringup and collection at boot. Their generated `.runtime/robot.env` has mode 0600 and contains only the corresponding robot's credential and configuration. Enable the user services and user lingering as described in `LIVE_ROBOT.md`. Confirm interactive sensor collection first. The bringup wrapper waits for its USB devices; the agent retries discovery and retains queued events while the PC or hotspot is unavailable.
+The optional services under `deployment/robot/` start bringup and collection at boot. Their generated `.runtime/robot.env` has mode 0600 and contains only the corresponding robot's credential and configuration. Enable the user services and user lingering as described in `02-live-robot-guide.md`. Confirm interactive sensor collection first. The bringup wrapper waits for its USB devices; the agent retries discovery and retains queued events while the PC or hotspot is unavailable.
 
 ## 5. Physical acceptance check
 
