@@ -1,0 +1,16 @@
+SwarmLink logo
+Generated with the built-in image_gen tool.
+The final PNG is swarmlink-logo.png; an identical runtime copy is in data-engineering/swarmlink_data/static/.
+
+Original generation prompt:
+Use case: logo-brand
+Asset type: SwarmLink robotics project logo icon for a dark real-time fleet dashboard and GitHub README.
+Primary request: Design an original compact mint-green SwarmLink logo mark. Form an elegant geometric S from linked paths with four distinct round nodes, suggesting four robots sharing live data. Strong, simple, recognizable silhouette at small sizes.
+Style: polished flat graphic, precise clean edges, restrained modern engineering identity.
+Color palette: bright mint #65E2B1 and medium green #28B88A, suitable against near-black #0B1419.
+Composition: one centered square icon, tight framing with only 8 percent transparent padding. No wordmark: the app will place the name SwarmLink alongside the icon in real text.
+Background: genuinely transparent alpha.
+Avoid: text, gradients, glows, shadows, 3D, mockup backgrounds, border, fine detail, watermark.
+
+Final refinement prompt (editing the first generated image):
+Use case: logo-brand. Clean up this SwarmLink logo as a finished PNG app icon. Preserve the centered S-shaped connected path and four circular robot nodes. Make all logo shapes fully opaque, flat solid mint green #65E2B1 with medium green #28B88A where needed to distinguish connections. Remove every speckle, grain, glow, gradient and stray pixel around and inside the logo. Smooth crisp filled edges. Keep only the area outside the actual solid icon genuinely transparent (alpha 0). Do not make the mint filled shapes transparent. No text, shadow, background rectangle, mockup or border. Keep square composition and balanced padding.

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swarmlink-data"
+version = "0.1.0"
+description = "Local telemetry, experiment data, and a live fleet dashboard for SwarmLink"
+requires-python = ">=3.11"
+dependencies = ["fastapi==0.115.0", "uvicorn==0.30.0", "pydantic==2.9.0", "websockets==15.0.1"]
+
+[project.optional-dependencies]
+analytics = ["pandas==2.3.3", "pyarrow==18.1.0"]
+test = ["pytest==8.2.2", "httpx==0.27.0", "PyYAML==6.0.2"]
+
+[project.scripts]
+swarmlink-data = "swarmlink_data.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["swarmlink_data*"]
+
+[tool.setuptools.package-data]
+swarmlink_data = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

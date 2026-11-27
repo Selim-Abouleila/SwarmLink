@@ -1,0 +1,17 @@
+[Unit]
+Description=SwarmLink read-only telemetry agent
+Wants=swarmlink-bringup.service
+After=swarmlink-bringup.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/SwarmLink/data-engineering
+ExecStart=/bin/bash %h/SwarmLink/data-engineering/deployment/robot/start-agent.sh
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

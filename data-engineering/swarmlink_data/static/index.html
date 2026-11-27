@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>SwarmLink · Fleet observatory</title>
+  <link rel="icon" type="image/png" href="/static/swarmlink-logo.png">
+  <link rel="stylesheet" href="/static/styles.css?v=session-2">
+  <script type="module" src="/static/app.mjs?v=session-2"></script>
+</head>
+<body>
+  <aside class="rail" aria-label="Navigation">
+    <a class="brand-mark" href="#overview" aria-label="SwarmLink home"><img src="/static/swarmlink-logo.png" alt="" width="36" height="36"></a>
+    <a class="rail-link active" href="#overview" aria-label="Fleet overview" title="Fleet overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></a>
+    <a class="rail-link" href="#data-quality" aria-label="Data quality" title="Data quality"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></a>
+    <a class="rail-link" href="#experiments" aria-label="Experiment metrics" title="Experiment metrics"><svg viewBox="0 0 24 24"><path d="M5 20V10m7 10V4m7 16v-7"/></svg></a>
+    <span class="rail-bottom" title="Local data plane">DE</span>
+  </aside>
+  <div class="shell">
+    <header class="topbar">
+      <a class="wordmark" href="#overview" aria-label="SwarmLink fleet observatory"><img class="wordmark-logo" src="/static/swarmlink-logo.png" alt="" width="40" height="40">swarm<span class="wordmark-accent">link</span><span class="wordmark-divider"></span><small>FLEET OBSERVATORY</small></a>
+      <div class="topbar-right"><span class="local-label">LOCAL DATA PLANE</span><span id="connection" class="connection waiting"><i></i><span>Connecting</span></span><button id="shutdown-button" class="shutdown-button" type="button" title="Waiting for the collector" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v7M5.5 4.5a7 7 0 1 0 9 0"/></svg><span>Shut down dashboard</span></button></div>
+    </header>
+    <main id="overview">
+      <section class="page-heading">
+        <div><div class="eyebrow">OPERATIONS / TELEMETRY</div><h1>Every robot. One view<span>.</span></h1><p>Live fleet signals, traceable events, and experiment evidence.</p></div>
+        <div class="run-controls"><label for="run-select">EXPERIMENT</label><div class="control-row"><select id="run-select"><option value="">Latest run</option></select><div class="export-wrap"><button id="export-toggle" class="button" aria-expanded="false" aria-controls="export-menu"><svg viewBox="0 0 20 20"><path d="M10 3v10m-4-4 4 4 4-4M4 13v4h12v-4"/></svg>Export</button><div id="export-menu" class="export-menu" hidden><button data-format="csv">Download CSV</button><button data-format="parquet">Download Parquet</button></div></div></div></div>
+      </section>
+      <div id="mode-banner" class="mode-banner"><div><span class="mode-tag" id="mode-tag">WAITING</span><span id="mode-description">Connecting to the local collector…</span></div><div id="demo-controls" hidden><button id="pause-button">Pause feed</button><span class="control-divider"></span><button id="interrupt-button">Test a 12s dropout <span>↗</span></button></div></div>
+      <div id="toast" class="toast" role="status" hidden></div>
+      <section class="metrics" aria-label="Fleet summary">
+        <article class="metric"><div class="metric-label">ROBOTS ONLINE <span class="tiny-dot green"></span></div><div class="metric-value" id="online-count">— <small>/ —</small></div><div class="metric-caption" id="online-caption">Awaiting telemetry</div></article>
+        <article class="metric"><div class="metric-label">INGESTION RATE <span class="metric-symbol">↗</span></div><div class="metric-value"><span id="event-rate">—</span><small>events/s</small></div><div class="metric-caption">Accepted events · last 10 seconds</div></article>
+        <article class="metric"><div class="metric-label">P95 EVENT AGE <span class="metric-symbol">◷</span></div><div class="metric-value"><span id="event-age">—</span><small>ms</small></div><div class="metric-caption" id="event-age-caption">At ingestion · requires aligned clocks</div></article>
+        <article class="metric"><div class="metric-label">SESSION EVENTS <span class="metric-symbol">▤</span></div><div class="metric-value" id="retained-count">—</div><div class="metric-caption">Unique events · since collector start</div></article>
+      </section>
+      <section class="workspace-grid">
+        <article class="panel map-panel"><div class="panel-heading"><div><h2>Fleet position</h2><p id="map-description">Waiting for odometry</p></div><span class="subtle-badge">METERS</span></div><div class="map-wrap"><canvas id="map-canvas" aria-label="Robot trajectories in their coordinate frame" role="img"></canvas><div class="map-key"><span class="tiny-dot green"></span><span id="map-key">Position + recent trajectory</span></div><span id="map-axis" class="map-axis">Y ↑ &nbsp; X →</span></div><div class="panel-foot map-foot"><span id="frame-note">Independent odometry frames are never overlaid.</span><button id="heading-toggle" class="heading-toggle" type="button" aria-pressed="false" hidden>Rotate 180°</button><span id="pose-count">— poses</span></div></article>
+        <article class="panel fleet-panel"><div class="panel-heading"><div><h2>The fleet</h2><p>Select a robot to inspect its signals</p></div><span class="count-badge" id="fleet-size">04</span></div><div id="robot-list" class="robot-list"></div><div class="panel-foot"><span><span class="tiny-dot green"></span> Fresh ≤ 6s</span><span><span class="tiny-dot amber"></span> Stale &gt; 6s</span></div></article>
+      </section>
+      <section class="detail-grid">
+        <article class="panel sensor-panel"><div class="panel-heading"><div><h2><span id="selected-name">Robot 01</span> <span class="heading-muted">/ LiDAR</span></h2><p id="scan-description">Waiting for scan data</p></div><span id="scan-badge" class="subtle-badge">NO SCAN</span></div><div class="sensor-content"><div class="lidar-wrap"><canvas id="lidar-canvas" role="img" aria-label="Selected robot LiDAR scan in the sensor frame"></canvas></div><div class="sensor-readings"><div><span>Nearest retained return</span><strong id="nearest-value">—<small> m</small></strong></div><div><span>Linear speed</span><strong id="speed-value">—<small> m/s</small></strong></div><div><span>Local outbox</span><strong id="outbox-value">—<small> queued</small></strong></div></div></div><div class="panel-foot"><span id="topic-ages">Topic freshness appears when available</span></div></article>
+        <article class="panel chart-panel"><div class="panel-heading"><div><h2>Motion over time</h2><p>Linear speed · latest 120 samples per robot</p></div><span class="subtle-badge">m/s</span></div><div class="chart-wrap"><canvas id="speed-canvas" role="img" aria-label="Recent speed history for each robot"></canvas></div><div id="chart-legend" class="panel-foot chart-legend"></div></article>
+      </section>
+      <section class="data-grid" id="data-quality">
+        <article class="panel"><div class="panel-heading"><div><h2>Event stream</h2><p>Recent accepted events in the selected experiment</p></div><span class="subtle-badge" id="stream-label">LIVE</span></div><div class="table-scroll"><table class="events-table"><thead><tr><th>COLLECTED</th><th>ROBOT</th><th>EVENT</th><th>SEQUENCE</th><th>SOURCE</th></tr></thead><tbody id="event-rows"><tr><td colspan="5" class="empty-cell">No events yet</td></tr></tbody></table></div></article>
+        <article class="panel quality-panel"><div class="panel-heading"><div><h2>Pipeline health</h2><p>Every receipt has an outcome</p></div><span class="quality-icon">✓</span></div><div class="quality-body"><div class="quality-bar" aria-hidden="true"><span id="quality-accepted"></span><span id="quality-duplicate"></span><span id="quality-rejected"></span></div><div class="quality-row"><span><i class="tiny-dot green"></i> Accepted</span><strong id="quality-accepted-count">0</strong></div><div class="quality-row"><span><i class="tiny-dot blue"></i> Duplicate retries</span><strong id="quality-duplicate-count">0</strong></div><div class="quality-row"><span><i class="tiny-dot red"></i> Quarantined</span><strong id="quality-rejected-count">0</strong></div><div class="quality-divider"></div><div class="quality-row"><span>Sequence gaps <small>selected run</small></span><strong id="gap-count">0</strong></div><p class="quality-note">Gaps can close when buffered events arrive. A stale signal indicates missing telemetry, not a proven robot failure.</p><details id="quarantine-details"><summary>Inspect rejected receipts</summary><div id="quarantine-list">No rejected receipts.</div></details></div></article>
+      </section>
+      <section class="panel experiment-panel" id="experiments"><div class="panel-heading"><div><h2>Experiment evidence</h2><p>Delivery and fault timings from explicit protocol events. Missing evidence stays blank.</p></div><span class="subtle-badge">PER RUN</span></div><div class="table-scroll"><table><thead><tr><th>EXPERIMENT / SCENARIO</th><th>PROTOCOL</th><th>DELIVERED</th><th>MEAN LATENCY</th><th>FAULTS DETECTED</th><th>DETECTION TIME</th><th>RECOVERY TIME</th></tr></thead><tbody id="comparison-rows"><tr><td colspan="7" class="empty-cell">No experiment events yet</td></tr></tbody></table></div><div class="panel-foot"><span>Simulation uses simulation time. Physical measurements require synchronized robot clocks.</span><span>Schema v1</span></div></section>
+      <footer><span><span class="footer-mark">S</span> SWARMLINK <span class="footer-separator">/</span> DATA ENGINEERING</span><span id="last-update">Awaiting first snapshot</span><span>Read-only observability <span class="tiny-dot green"></span></span></footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+[Unit]
+Description=SwarmLink TurtleBot sensor bringup
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/SwarmLink/data-engineering
+ExecStart=/bin/bash %h/SwarmLink/data-engineering/deployment/robot/start-bringup.sh
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
